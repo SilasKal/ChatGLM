@@ -64,5 +64,5 @@ def dat(prompt, filename_raw, filename2, num_responses):
 
 
 # dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
-dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
+# dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
 dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
