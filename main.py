@@ -52,7 +52,7 @@ def dat(prompt, filename_raw, filename2, num_responses):
         response = chatglm(prompt)
         response = ''.join(filter(lambda x: (not x.isdigit() and not x in ['.', ' ']), response))
         response = response.split('\n')
-        with open(filename_raw, 'a+') as f:
+        with open(filename_raw, 'a+', encoding='utf8') as f:
             print(i)
             string_to_write = ",".join(response)
             # Write the string to the file
