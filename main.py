@@ -1,27 +1,67 @@
 from transformers import AutoTokenizer, AutoModel
+import pandas as pd
 # import sentencepiece as spm
 # import torch
 # import cuda
 # import openai
-from flask import Flask
-app = Flask(__name__)
+# from flask import Flask
+# app = Flask(__name__)
+#
+# @app.route('/chatglm/<user_input>')
+disassociationprompt = "Please name 10 words that are as different from each other as possible, " \
+                       "in all meanings and uses of " \
+                       "the words. Follow the following rules: " \
+                       "Only single words in English, only nouns (e.g., things, objects, concepts), " \
+                       "no proper nouns (e.g., no specific people or places) and no specialised vocabulary " \
+                       "(e.g., no technical terms). "
 
-@app.route('/chatglm/<user_input>')
+disassociationprompt2 = "Please name 10 words that are as different from each other as possible, " \
+                       "in all meanings and uses of " \
+                       "the words. Maximize the unrelatedness of the words! Follow the following rules: " \
+                       "Only single words in English, only nouns (e.g., things, objects, concepts), " \
+                       "no proper nouns (e.g., no specific people or places) and no specialised vocabulary " \
+                       "(e.g., no technical terms). "
+
+
 def chatglm(user_input):
     tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b-int8", trust_remote_code=True)
     model = AutoModel.from_pretrained("THUDM/chatglm-6b-int8", trust_remote_code=True).half().cuda()
     model = model.eval()
     response, history = model.chat(tokenizer, user_input, history=[])
-    print(response)
+    print(user_input, response)
     return response
-app.run(host='0.0.0.0')
-# response, history = model.chat(tokenizer, "晚上睡不着应该怎么办", history=history)
-# print(response)
 
-# import requests
-#
-# name = 'John'
-#
-# response = requests.get(f'http://127.0.0.0.1:5000/chatglm/hello')
-#
-# print(response.text)  # prints "Hello, John!"
+
+def dat_txt_tsv(filename, filename2):
+    columns = ['id']
+    for i in range(1, 11):
+        columns.append('word' + str(i))
+    df = pd.DataFrame(columns = columns)
+    print(columns)
+    with open(filename, 'r') as f:
+        for counter, line in enumerate(f):
+            print([counter] + line.strip().split(',')[1:11])
+            line = line.strip()
+            df.loc[len(df)] = [counter] + line.split(',')[1:11]
+    print(df)
+    df.to_csv(filename2, sep='\t')
+
+def dat(prompt, filename_raw, filename2, num_responses):
+    # df = pd.DataFrame(columns = ['word ' + str(i) for i in range(1, 11)])
+    for i in range(num_responses):
+        response = chatglm(prompt)
+        response = ''.join(filter(lambda x: (not x.isdigit() and not x in ['.', ' ']), response))
+        response = response.split('\n')
+        with open(filename_raw, 'a+') as f:
+            print(i)
+            string_to_write = ",".join(response)
+            # Write the string to the file
+            if i != 0:
+                f.write('\n' + string_to_write)
+            else:
+                f.write(string_to_write)
+    dat_txt_tsv(filename_raw, filename2)
+
+
+dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
+dat(disassociationprompt2, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
