@@ -42,9 +42,9 @@ def dat_txt_tsv(filename, filename2):
         for counter, line in enumerate(f):
             print([counter] + line.strip().split(',')[1:11])
             line = line.strip()
-            df.loc[len(df)] = [counter] + line.split(',')[1:11].encode('utf8', 'replace')
+            df.loc[len(df)] = [counter] + line.split(',')[1:11]
     print(df)
-    df.to_csv(filename2, sep='\t')
+    df.to_csv(filename2, sep='\t', encoding='utf8')
 
 def dat(prompt, filename_raw, filename2, num_responses):
     # df = pd.DataFrame(columns = ['word ' + str(i) for i in range(1, 11)])
