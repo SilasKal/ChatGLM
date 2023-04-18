@@ -38,11 +38,11 @@ def dat_txt_tsv(filename, filename2):
         columns.append('word' + str(i))
     df = pd.DataFrame(columns = columns)
     print(columns)
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding='utf8') as f:
         for counter, line in enumerate(f):
             print([counter] + line.strip().split(',')[1:11])
             line = line.strip()
-            df.loc[len(df)] = [counter] + line.split(',')[1:11]
+            df.loc[len(df)] = [counter] + line.split(',')[1:11].encode('utf8', 'replace')
     print(df)
     df.to_csv(filename2, sep='\t')
 
@@ -63,5 +63,6 @@ def dat(prompt, filename_raw, filename2, num_responses):
     dat_txt_tsv(filename_raw, filename2)
 
 
-dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
+# dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
+dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
 dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
