@@ -106,5 +106,24 @@ def filter_responses(filename, filename_new):
 # filter_responses('response_100_prompt1.txt', 'response_100_prompt1_filtered.txt')
 # dat_txt_tsv('response_100_prompt1_filtered.txt', 'response_prompt1_chatglm.tsv')
 
+def save_response_rat(filename):
+    df = pd.read_csv('data_changed_2.txt', sep=' ')['RemoteAssociateItems']
+    df2 = pd.read_csv('data_changed_2.txt', sep=' ')['Solutions']
+    # print(df.to_string())
+    # print(df2.to_string())
+    for i, word in enumerate(df):
+        prompt = 'What word connects curr_items? Only name the connecting word and do not explain your answer.'
+        prompt = prompt.replace('curr_items', word)
+        print(prompt)
+        response = chatglm(prompt, [])
+        # response = a21_model(prompt)
+        # print(response)
+        with open(filename, 'a+') as f:
+            if i != 0:
+                f.write('\n' + prompt + ' # ' + response.replace('\n', ' '))
+            else:
+                f.write(prompt + ' # ' + response.replace('\n', ' '))
 
-chatglm(input('User input >'))
+
+for i in range(0, 10):
+    save_response_rat('responses_rat_glm_' + str(i) + '.txt')
