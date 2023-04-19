@@ -118,7 +118,7 @@ def save_response_rat(filename):
         response = chatglm(prompt, [])
         # response = a21_model(prompt)
         # print(response)
-        with open(filename, 'a+') as f:
+        with open(filename, 'a+', encoding='utf8') as f:
             if i != 0:
                 f.write('\n' + prompt + ' # ' + response.replace('\n', ' '))
             else:
