@@ -1,3 +1,5 @@
+import re
+
 from transformers import AutoTokenizer, AutoModel
 import pandas as pd
 # import sentencepiece as spm
@@ -23,11 +25,11 @@ disassociationprompt2 = "Please name 10 words that are as different from each ot
                        "(e.g., no technical terms). "
 
 
-def chatglm(user_input):
+def chatglm(user_input, message_history = []):
     tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b-int8", trust_remote_code=True)
     model = AutoModel.from_pretrained("THUDM/chatglm-6b-int8", trust_remote_code=True).half().cuda()
     model = model.eval()
-    response, history = model.chat(tokenizer, user_input, history=[])
+    response, history = model.chat(tokenizer, user_input, history=message_history)
     print(user_input, response)
     return response
 
@@ -62,7 +64,47 @@ def dat(prompt, filename_raw, filename2, num_responses):
                 f.write(string_to_write)
     dat_txt_tsv(filename_raw, filename2)
 
-
+def filter_responses(filename, filename_new):
+    # Open the file in read mode
+    lines_lst = []
+    with open(filename, 'r', encoding='utf8') as file:
+        for line in file:
+            new_list = []
+            curr_list = line.strip().split(',')
+            # print(curr_list)
+            for i in curr_list:
+                i = re.sub('[\u4e00-\u9fff]+', '', i)
+                i= re.sub('-[^ ]*', '', i)
+                # i = i.replace('(', '')
+                # i = i.replace(')', '')
+                i= re.sub('[^a-zA-Z]+', '', i)
+                # print(filtered_string)
+                if not (i.startswith('These') or i.startswith('Note') or i.endswith(':') or i.endswith('!') or i.startswith('here') or i in ['', ',', 'Okay'] or i.startswith('suchas')):
+                    new_list.append(i)
+                    # print(i)
+                else:
+                    pass
+                    # print(i)
+            # print(new_list)
+            lines_lst.append(new_list)
+    file.close()
+    # Open the file in write mode and write the modified contents back to the file
+    with open(filename_new, 'w', encoding='utf8') as f:
+        for i, response in enumerate(lines_lst):
+            print(response)
+            # Convert the list of strings to a single string separated by commas
+            string_to_write = ",".join(response)
+            # Write the string to the file
+            if i != 0:
+                f.write('\n' + string_to_write)
+            else:
+                f.write(string_to_write)
+    f.close()
 # dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
 # dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
-dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
+# dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
+# filter_responses('response_100_prompt1.txt', 'response_100_prompt1_filtered.txt')
+# dat_txt_tsv('response_100_prompt1_filtered.txt', 'response_prompt1_chatglm.tsv')
+
+
+chatglm(input('User input >'))
