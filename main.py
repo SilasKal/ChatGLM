@@ -2,6 +2,7 @@ import re
 
 from transformers import AutoTokenizer, AutoModel
 import pandas as pd
+
 # import sentencepiece as spm
 # import torch
 # import cuda
@@ -18,14 +19,18 @@ disassociationprompt = "Please name 10 words that are as different from each oth
                        "(e.g., no technical terms). "
 
 disassociationprompt2 = "Please name 10 words that are as different from each other as possible, " \
-                       "in all meanings and uses of " \
-                       "the words. Maximize the unrelatedness of the words! Follow the following rules: " \
-                       "Only single words in English, only nouns (e.g., things, objects, concepts), " \
-                       "no proper nouns (e.g., no specific people or places) and no specialised vocabulary " \
-                       "(e.g., no technical terms). "
+                        "in all meanings and uses of " \
+                        "the words. Maximize the unrelatedness of the words! Follow the following rules: " \
+                        "Only single words in English, only nouns (e.g., things, objects, concepts), " \
+                        "no proper nouns (e.g., no specific people or places) and no specialised vocabulary " \
+                        "(e.g., no technical terms). "
+items = ['book', 'fork', 'tin can', 'box', 'rope', 'brick']
+aut_prompt = 'What are some creative uses for a item? The goal is to come up with creative ideas, ' \
+             'which are ideas that strike people as clever, unusual, interesting, uncommon, humorous, innovative, or' \
+             ' different. List num_use_cases creative uses for a item.'
 
 
-def chatglm(user_input, message_history = []):
+def chatglm(user_input, message_history=[]):
     tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b-int8", trust_remote_code=True)
     model = AutoModel.from_pretrained("THUDM/chatglm-6b-int8", trust_remote_code=True).half().cuda()
     model = model.eval()
@@ -38,7 +43,7 @@ def dat_txt_tsv(filename, filename2):
     columns = ['id']
     for i in range(1, 11):
         columns.append('word' + str(i))
-    df = pd.DataFrame(columns = columns)
+    df = pd.DataFrame(columns=columns)
     print(columns)
     with open(filename, 'r', encoding='utf8') as f:
         for counter, line in enumerate(f):
@@ -47,6 +52,7 @@ def dat_txt_tsv(filename, filename2):
             df.loc[len(df)] = [counter] + line.split(',')[1:11]
     print(df)
     df.to_csv(filename2, sep='\t', encoding='utf8')
+
 
 def dat(prompt, filename_raw, filename2, num_responses):
     # df = pd.DataFrame(columns = ['word ' + str(i) for i in range(1, 11)])
@@ -64,6 +70,7 @@ def dat(prompt, filename_raw, filename2, num_responses):
                 f.write(string_to_write)
     dat_txt_tsv(filename_raw, filename2)
 
+
 def filter_responses(filename, filename_new):
     # Open the file in read mode
     lines_lst = []
@@ -74,12 +81,13 @@ def filter_responses(filename, filename_new):
             # print(curr_list)
             for i in curr_list:
                 i = re.sub('[\u4e00-\u9fff]+', '', i)
-                i= re.sub('-[^ ]*', '', i)
+                i = re.sub('-[^ ]*', '', i)
                 # i = i.replace('(', '')
                 # i = i.replace(')', '')
-                i= re.sub('[^a-zA-Z]+', '', i)
+                i = re.sub('[^a-zA-Z]+', '', i)
                 # print(filtered_string)
-                if not (i.startswith('These') or i.startswith('Note') or i.endswith(':') or i.endswith('!') or i.startswith('here') or i in ['', ',', 'Okay'] or i.startswith('suchas')):
+                if not (i.startswith('These') or i.startswith('Note') or i.endswith(':') or i.endswith(
+                        '!') or i.startswith('here') or i in ['', ',', 'Okay'] or i.startswith('suchas')):
                     new_list.append(i)
                     # print(i)
                 else:
@@ -100,11 +108,7 @@ def filter_responses(filename, filename_new):
             else:
                 f.write(string_to_write)
     f.close()
-# dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
-# dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
-# dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
-# filter_responses('response_100_prompt1.txt', 'response_100_prompt1_filtered.txt')
-# dat_txt_tsv('response_100_prompt1_filtered.txt', 'response_prompt1_chatglm.tsv')
+
 
 def save_response_rat(filename):
     df = pd.read_csv('data_changed_2.txt', sep=' ')['RemoteAssociateItems']
@@ -125,5 +129,37 @@ def save_response_rat(filename):
                 f.write(prompt + ' # ' + response.replace('\n', ' '))
 
 
-for i in range(0, 10):
-    save_response_rat('responses_rat_glm_' + str(i) + '.txt')
+def save_response_aut(prompt, item, filename, num_use_cases, num_responses):
+    prompt = prompt.replace('item', item)
+    prompt = prompt.replace('num_use_cases', str(num_use_cases))
+    print(prompt)
+    columns = ['id', 'item', 'response', 'condition']
+    df = pd.DataFrame(columns=columns)
+    counter = 1
+    for i in range(num_responses):
+        print(i)
+        # response = chatgpt(prompt, [])
+        response = chatglm(prompt, [])
+        # print(response)
+        # print(response)
+        # response = ''.join(filter(lambda x: (not x.isdigit() and not x in ['.', ' ']), response))
+        # print(response)
+        response = response.split('\n')
+        # print(response)
+        for j in response:
+            if j not in ['', ' ']:
+                df.loc[len(df)] = [counter, item, j, 'creative']
+                counter += 1
+                df.to_csv(filename + '_' + item + '.csv')
+
+
+# dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
+# dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
+# dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
+# filter_responses('response_100_prompt1.txt', 'response_100_prompt1_filtered.txt')
+# dat_txt_tsv('response_100_prompt1_filtered.txt', 'response_prompt1_chatglm.tsv')
+# for i in range(0, 10):
+#     save_response_rat('responses_rat_glm_' + str(i) + '.txt')
+
+for item in items:
+    save_response_aut(aut_prompt, item, 'aut_glm_', 10, 25)
