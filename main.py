@@ -11,6 +11,10 @@ import pandas as pd
 # app = Flask(__name__)
 #
 # @app.route('/chatglm/<user_input>')
+
+forward_flow_prompt = "Starting with the word seed_word, name the next word that follows in your mind from the previous " \
+                      "word. Please put down only single words, and do not use proper nouns " \
+                      "(such as names, brands, etc.). Name 19 words in total."
 disassociationprompt = "Please name 10 words that are as different from each other as possible, " \
                        "in all meanings and uses of " \
                        "the words. Follow the following rules: " \
@@ -153,6 +157,46 @@ def save_response_aut(prompt, item, filename, num_use_cases, num_responses):
                 df.to_csv(filename + '_' + item + '.csv')
 
 
+def save_response_ff2(filename, responses,  seedword):
+    max_length = max(len(lst) for lst in responses)
+    df = pd.DataFrame(columns=['Subject#'] + ['Word ' + str(i) for i in range(1, max_length+2)])
+    # print(df, max_length)
+    for counter, i in enumerate(responses):
+        if len(i) < max_length:
+            for j in range(max_length-len(i)):
+                i.append('')
+            print(i, 'new')
+        df.loc[len(df)] = [counter, seedword] + i
+    # print(df)
+    df.to_csv(filename + '.csv')
+def save_response_ff(prompt, seedword, filename, num_responses):
+    prompt = prompt.replace('seed_word', seedword)
+    print(prompt)
+    # print(df)
+    responses = []
+    for i in range(num_responses):
+        response = chatglm(prompt, [])
+        print(i)
+        response = ''.join(filter(lambda x: (not x.isdigit() and not x in ['.', ' ']), response))
+        # print(response)
+        response = response.split(',')
+        # response = response.split('\n')
+        if len(response) == 1:
+            response = "".join(response)
+            response = response.split('\n')
+            if len(response) == 1:
+                response = "".join(response)
+                response = response.split('->')
+                if len(response) == 1:
+                    response = "".join(response)
+                    response = response.split('-')
+        # print([i] + response)
+        # df.loc[len(df)] = [i, seedwords[0]] + response
+        # print(df)
+        responses.append(response)
+        save_response_ff2(filename, responses, seedword)
+
+
 # dat(disassociationprompt, 'response_100_prompt1.txt', 'response_prompt1_chatglm.tsv', 100)
 # dat_txt_tsv('response_100_prompt1.txt', 'response_prompt1_chatglm.tsv')
 # dat(disassociationprompt2, 'response_100_prompt2.txt', 'response_prompt2_chatglm.tsv', 100)
@@ -160,6 +204,9 @@ def save_response_aut(prompt, item, filename, num_use_cases, num_responses):
 # dat_txt_tsv('response_100_prompt1_filtered.txt', 'response_prompt1_chatglm.tsv')
 # for i in range(0, 10):
 #     save_response_rat('responses_rat_glm_' + str(i) + '.txt')
+#
+# for item in items:
+#     save_response_aut(aut_prompt, item, 'aut_glm_', 10, 25)
 
-for item in items:
-    save_response_aut(aut_prompt, item, 'aut_glm_', 10, 25)
+for word in ['bear', 'candle', 'paper', 'snow', 'table', 'toaster']:
+    save_response_ff(forward_flow_prompt, word, 'ff_glm' + word, 100)
