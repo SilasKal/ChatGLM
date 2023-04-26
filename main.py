@@ -1,6 +1,7 @@
 import re
 
 from transformers import AutoTokenizer, AutoModel, LlamaForCausalLM, AutoModelForCausalLM
+from transformers import LLaMATokenizer
 import pandas as pd
 
 # import sentencepiece as spm
