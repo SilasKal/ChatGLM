@@ -1,7 +1,6 @@
 import re
 
-from transformers import AutoTokenizer, AutoModel, LlamaForCausalLM, AutoModelForCausalLM
-from transformers import LLaMATokenizer
+from transformers import AutoTokenizer, AutoModel
 import pandas as pd
 
 # import sentencepiece as spm
@@ -44,19 +43,6 @@ def chatglm(user_input, message_history=[]):
     return response
 
 
-def llama_model(user_input):
-    tokenizer = AutoTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
-    model = AutoModelForCausalLM.from_pretrained("decapoda-research/llama-7b-hf")
-    inputs = tokenizer(user_input, return_tensors='pt')
-    generate_ids = model.generate(inputs.inputs_ids, max_length=30)
-    response = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    print(response)
-    return response
-
-
-print(llama_model('This is a test'))
-print(llama_model(disassociationprompt))
-print(llama_model(disassociationprompt2))
 
 def dat_txt_tsv(filename, filename2):
     columns = ['id']
